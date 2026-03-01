@@ -10,6 +10,7 @@
 
 import type * as ai from "../ai.js";
 import type * as apiUsage from "../apiUsage.js";
+import type * as auth from "../auth.js";
 import type * as brainDumps from "../brainDumps.js";
 import type * as chatContext from "../chatContext.js";
 import type * as clearData from "../clearData.js";
@@ -33,6 +34,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   apiUsage: typeof apiUsage;
+  auth: typeof auth;
   brainDumps: typeof brainDumps;
   chatContext: typeof chatContext;
   clearData: typeof clearData;
