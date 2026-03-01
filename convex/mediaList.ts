@@ -51,6 +51,7 @@ export const bulkCreate = mutation({
     items: v.array(
       v.object({
         title: v.string(),
+        year: v.optional(v.string()),
         category: categoryValidator,
         notes: v.optional(v.string()),
         sourceDumpId: v.optional(v.id("brainDumps")),

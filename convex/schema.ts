@@ -12,6 +12,7 @@ export default defineSchema({
 
   mediaList: defineTable({
     title: v.string(),
+    year: v.optional(v.string()),
     sourceDumpId: v.optional(v.id("brainDumps")),
     category: v.union(
       v.literal("Sitcom"),

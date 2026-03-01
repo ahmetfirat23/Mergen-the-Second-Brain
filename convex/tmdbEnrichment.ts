@@ -12,7 +12,10 @@ function parseTitleYear(raw: string): { searchQuery: string } {
   return { searchQuery: raw.trim() };
 }
 
-async function fetchTmdbMatch(searchQuery: string): Promise<{
+async function fetchTmdbMatch(
+  searchQuery: string,
+  filterYear?: string
+): Promise<{
   tmdbId: number;
   tmdbMediaType: string;
   posterPath: string | null;
@@ -31,9 +34,25 @@ async function fetchTmdbMatch(searchQuery: string): Promise<{
   });
   if (!res.ok) return null;
 
-  type TmdbRaw = { id: number; media_type: string; title?: string; name?: string; poster_path?: string; overview?: string; vote_average?: number };
+  type TmdbRaw = {
+    id: number;
+    media_type: string;
+    title?: string;
+    name?: string;
+    poster_path?: string;
+    overview?: string;
+    vote_average?: number;
+    release_date?: string;
+    first_air_date?: string;
+  };
   const data = (await res.json()) as { results: TmdbRaw[] };
-  const match = data.results?.find((r) => r.media_type === "movie" || r.media_type === "tv");
+  const candidates = (data.results ?? []).filter((r) => r.media_type === "movie" || r.media_type === "tv");
+  const match = filterYear
+    ? candidates.find((r) => {
+        const date = r.release_date ?? r.first_air_date ?? "";
+        return date.startsWith(filterYear);
+      }) ?? candidates[0]
+    : candidates[0];
   if (!match) return null;
 
   const mediaType = match.media_type === "tv" ? "tv" : "movie";
@@ -99,7 +118,7 @@ export const enrichOne = internalAction({
     if (!item || item.tmdbId) return;
 
     const { searchQuery } = parseTitleYear(item.title);
-    const match = await fetchTmdbMatch(searchQuery);
+    const match = await fetchTmdbMatch(searchQuery.trim(), item.year);
     if (!match) return;
 
     await ctx.runMutation(internal.tmdbEnrichment.patchTmdbData, {

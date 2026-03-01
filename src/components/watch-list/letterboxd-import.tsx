@@ -205,7 +205,8 @@ export function LetterboxdImport() {
     if (!parsed || parsed.length === 0) return;
     startTransition(async () => {
       const items = parsed.map((p) => ({
-        title: p.year ? `${p.title} (${p.year})` : p.title,
+        title: p.title,
+        year: p.year || undefined,
         category: "Film" as const,
         watchedAt: p.isWatchlist ? undefined : (p.watchedDate ? `${p.watchedDate}T12:00:00.000Z` : undefined),
         watchedNotes: p.review || undefined,
@@ -265,7 +266,7 @@ export function LetterboxdImport() {
             <div className="flex-1 overflow-y-auto mb-4 max-h-48 rounded-lg bg-[hsl(0_0%_7%)] border border-[hsl(0_0%_13%)] p-2">
               {parsed.slice(0, 25).map((p, i) => (
                 <div key={i} className="text-xs text-[hsl(0_0%_70%)] py-0.5 truncate flex gap-2">
-                  <span>{p.title} {p.year && `(${p.year})`}</span>
+                  <span>{p.title}{p.year ? ` (${p.year})` : ""}</span>
                   {p.rating != null && <span className="text-amber-400 shrink-0">★ {(p.rating / 2).toFixed(1)}</span>}
                   {p.isWatchlist && <span className="text-sky-400 shrink-0">to watch</span>}
                 </div>
