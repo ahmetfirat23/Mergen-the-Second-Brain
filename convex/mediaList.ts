@@ -32,7 +32,7 @@ export const list = query({
   },
 });
 
-type MediaRow = { _id: Id<"mediaList">; tmdbId?: number; title: string; watchedAt?: string; posterPath?: string; overview?: string; voteAverage?: number; genres?: string[]; director?: string; runtime?: number; tmdbMediaType?: string };
+type MediaRow = { _id: Id<"mediaList">; tmdbId?: number; title: string; watchedAt?: string; watchedNotes?: string; userRating?: number; posterPath?: string; overview?: string; voteAverage?: number; genres?: string[]; director?: string; runtime?: number; tmdbMediaType?: string };
 
 function findExisting(list: MediaRow[], item: { tmdbId?: number; title: string }): MediaRow | undefined {
   const norm = item.title.trim().toLowerCase();
@@ -144,24 +144,36 @@ export const bulkCreate = mutation({
     const all = await ctx.db.query("mediaList").collect();
     let maxOrder = all.reduce((m, i) => Math.max(m, i.sortOrder), 0);
 
-    // Track titles/ids inserted in this batch to avoid intra-batch dupes
     const batchSeen: { tmdbId?: number; title: string }[] = [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ids: any[] = [];
     let skipped = 0;
+    let patched = 0;
 
     for (const item of items) {
-      if (isDuplicate(all, item) || isDuplicate(batchSeen, item)) {
-        skipped++;
+      const existing = findExisting(all, item) ?? findExisting(batchSeen as MediaRow[], item);
+      if (existing && "_id" in existing) {
+        // Patch missing review/rating/watchedAt onto existing entry
+        const patch: Record<string, unknown> = {};
+        if (item.watchedNotes?.trim() && !existing.watchedNotes?.trim()) patch.watchedNotes = item.watchedNotes;
+        if (item.userRating != null && existing.userRating == null) patch.userRating = item.userRating;
+        if (item.watchedAt && !existing.watchedAt) patch.watchedAt = item.watchedAt;
+        if (Object.keys(patch).length > 0) {
+          await ctx.db.patch(existing._id, patch);
+          patched++;
+        } else {
+          skipped++;
+        }
         continue;
       }
+      if (isDuplicate(batchSeen, item)) { skipped++; continue; }
       maxOrder++;
       const id = await ctx.db.insert("mediaList", { ...item, sortOrder: maxOrder });
       ids.push(id);
       batchSeen.push({ tmdbId: item.tmdbId, title: item.title });
     }
 
-    return { ids, skipped };
+    return { ids, skipped, patched };
   },
 });
 

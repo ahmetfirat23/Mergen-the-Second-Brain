@@ -7,7 +7,7 @@ import { differenceInDays, format, parseISO } from "date-fns";
 import { AlertTriangle, Check, GripVertical, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState, useTransition } from "react";
 import {
-  DndContext, DragEndEvent, KeyboardSensor, PointerSensor,
+  DndContext, DragEndEvent, KeyboardSensor, PointerSensor, TouchSensor,
   closestCenter, useSensor, useSensors,
 } from "@dnd-kit/core";
 import {
@@ -191,7 +191,8 @@ export function DeadlineTable() {
   const [isPending, startTransition] = useTransition();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 

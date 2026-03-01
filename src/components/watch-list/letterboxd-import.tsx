@@ -234,14 +234,14 @@ export function LetterboxdImport() {
       const result = await bulkCreate({ items });
       const ids = result?.ids ?? [];
       const skipped = result?.skipped ?? 0;
+      const patched = (result as { patched?: number })?.patched ?? 0;
       if (ids.length) {
         await scheduleEnrichment({ mediaIds: ids });
       }
-      const skipNote = skipped > 0 ? ` · ${skipped} duplicate${skipped !== 1 ? "s" : ""} skipped` : "";
-      toast.success(
-        `Imported ${ids.length} item${ids.length !== 1 ? "s" : ""}${skipNote}`,
-        { description: ids.length ? "TMDB metadata updating in background." : undefined }
-      );
+      const parts: string[] = [`Imported ${ids.length} new item${ids.length !== 1 ? "s" : ""}`];
+      if (patched > 0) parts.push(`${patched} updated with reviews/ratings`);
+      if (skipped > 0) parts.push(`${skipped} unchanged`);
+      toast.success(parts.join(" · "), { description: ids.length ? "TMDB metadata updating in background." : undefined });
       setParsed(null);
       setShow(false);
       setSources([]);

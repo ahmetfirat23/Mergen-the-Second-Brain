@@ -6,7 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { ExternalLink, GripVertical, Pencil, Plus, Trash2, X, Check, ClipboardList } from "lucide-react";
 import { useState, useTransition } from "react";
 import {
-  DndContext, DragEndEvent, KeyboardSensor, PointerSensor,
+  DndContext, DragEndEvent, KeyboardSensor, PointerSensor, TouchSensor,
   closestCenter, useSensor, useSensors,
 } from "@dnd-kit/core";
 import {
@@ -140,7 +140,8 @@ export function VaultList() {
   const [isPending, startTransition] = useTransition();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 

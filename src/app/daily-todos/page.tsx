@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { Check, GripVertical, ListTodo, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import {
-  DndContext, DragEndEvent, KeyboardSensor, PointerSensor,
+  DndContext, DragEndEvent, KeyboardSensor, PointerSensor, TouchSensor,
   closestCenter, useSensor, useSensors,
 } from "@dnd-kit/core";
 import {
@@ -40,7 +40,8 @@ export default function DailyTodosPage() {
   const [isPending, startTransition] = useTransition();
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
