@@ -17,6 +17,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
   const mainRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  const isWatchList = pathname === "/watch-list";
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -72,7 +73,7 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
       </div>
       <BottomNav />
       <CmdKSearch open={cmdKOpen} onClose={() => setCmdKOpen(false)} />
-      <MovieChat />
+      {isWatchList && <MovieChat />}
       <button
         onClick={() => mainRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
         aria-label="Scroll to top"
