@@ -100,6 +100,14 @@ export default defineSchema({
     sortOrder: v.number(),
   }).index("by_date", ["date"]),
 
+  weeklyTodos: defineTable({
+    text: v.string(),
+    done: v.boolean(),
+    urgency: v.number(),
+    sortOrder: v.number(),
+    scheduledDate: v.optional(v.string()),
+  }).index("by_scheduled", ["scheduledDate"]),
+
   goals: defineTable({
     title: v.string(),
     sourceDumpId: v.optional(v.id("brainDumps")),

@@ -24,6 +24,7 @@ import type * as search from "../search.js";
 import type * as tasteSummary from "../tasteSummary.js";
 import type * as tmdbEnrichment from "../tmdbEnrichment.js";
 import type * as vault from "../vault.js";
+import type * as weeklyTodos from "../weeklyTodos.js";
 
 import type {
   ApiFromModules,
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   tasteSummary: typeof tasteSummary;
   tmdbEnrichment: typeof tmdbEnrichment;
   vault: typeof vault;
+  weeklyTodos: typeof weeklyTodos;
 }>;
 
 /**
