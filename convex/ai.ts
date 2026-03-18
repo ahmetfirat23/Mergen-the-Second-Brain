@@ -203,7 +203,7 @@ export const tidyText = action({
     }
 
     if (usage) {
-      await ctx.runMutation(api.apiUsage.log, {
+      await ctx.runMutation(internal.apiUsage.log, {
         source: "ai-tidy",
         provider,
         inputTokens: usage.prompt_tokens,
@@ -245,7 +245,7 @@ export const fanOutDump = action({
     }
 
     if (usage) {
-      await ctx.runMutation(api.apiUsage.log, {
+      await ctx.runMutation(internal.apiUsage.log, {
         source: "ai-fanout",
         provider,
         inputTokens: usage.prompt_tokens,
@@ -394,7 +394,7 @@ export const generateTasteSummary = action({
       }
 
       if (usage) {
-        await ctx.runMutation(api.apiUsage.log, {
+        await ctx.runMutation(internal.apiUsage.log, {
           source: "ai-taste",
           provider,
           inputTokens: usage.prompt_tokens,
@@ -435,7 +435,7 @@ export const tidyAllPending = internalAction({
       try {
         const { content: raw, usage } = await callGrok(FAN_OUT_SYSTEM, dump.content, { maxTokens: 2048 });
         if (usage) {
-          await ctx.runMutation(api.apiUsage.log, {
+          await ctx.runMutation(internal.apiUsage.log, {
             source: "ai-tidy-all",
             provider: "grok",
             inputTokens: usage.prompt_tokens,
@@ -536,7 +536,7 @@ export const proposeTopics = action({
     }
 
     if (usage) {
-      await ctx.runMutation(api.apiUsage.log, {
+      await ctx.runMutation(internal.apiUsage.log, {
         source: "ai-topics-propose", provider,
         inputTokens: usage.prompt_tokens, outputTokens: usage.completion_tokens,
         ...(provider === "gpt" && { model }),
@@ -591,7 +591,7 @@ export const assignCardsToTopics = action({
     }
 
     if (usage) {
-      await ctx.runMutation(api.apiUsage.log, {
+      await ctx.runMutation(internal.apiUsage.log, {
         source: "ai-topics-assign", provider,
         inputTokens: usage.prompt_tokens, outputTokens: usage.completion_tokens,
         ...(provider === "gpt" && { model }),
@@ -632,7 +632,7 @@ export const categorizeIncrementalCron = internalAction({
     const { content: raw, usage } = await callGrok(ASSIGN_INCREMENTAL_SYSTEM, cardsText, { maxTokens: 2048 });
 
     if (usage) {
-      await ctx.runMutation(api.apiUsage.log, {
+      await ctx.runMutation(internal.apiUsage.log, {
         source: "ai-topics-cron", provider: "grok",
         inputTokens: usage.prompt_tokens, outputTokens: usage.completion_tokens,
       });
