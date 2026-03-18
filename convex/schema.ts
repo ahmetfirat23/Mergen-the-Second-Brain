@@ -75,6 +75,7 @@ export default defineSchema({
     url: v.string(),
     urgency: v.number(),
     sortOrder: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
   }),
 
   knowledgeCards: defineTable({

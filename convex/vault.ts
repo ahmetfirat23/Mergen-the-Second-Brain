@@ -12,7 +12,7 @@ export const list = query({
 });
 
 export const create = mutation({
-  args: { title: v.string(), url: v.string(), urgency: v.number() },
+  args: { title: v.string(), url: v.string(), urgency: v.number(), tags: v.optional(v.array(v.string())) },
   handler: async (ctx, args) => {
     await requireUserIdentity(ctx);
     const all = await ctx.db.query("vault").collect();
@@ -47,6 +47,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     url: v.optional(v.string()),
     urgency: v.optional(v.number()),
+    tags: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { id, ...fields }) => {
     await requireUserIdentity(ctx);
