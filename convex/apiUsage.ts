@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { requireUserIdentity } from "./auth";
 
 // Grok grok-4-1-fast-reasoning: $0.20/1M input, $0.50/1M output
@@ -11,7 +11,7 @@ const GPT_5_MINI_OUTPUT_PER_1M = 2.0;
 const GPT_5_NANO_INPUT_PER_1M = 0.05;
 const GPT_5_NANO_OUTPUT_PER_1M = 0.4;
 
-export const log = internalMutation({
+export const log = mutation({
   args: {
     source: v.string(),
     provider: v.string(),
@@ -20,6 +20,7 @@ export const log = internalMutation({
     model: v.optional(v.string()),
   },
   handler: async (ctx, { source, provider, inputTokens, outputTokens, model }) => {
+    await requireUserIdentity(ctx);
     let estimatedCostUsd = 0;
     if (provider === "grok") {
       estimatedCostUsd =
