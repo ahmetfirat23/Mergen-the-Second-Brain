@@ -68,13 +68,14 @@ export const getDueCount = query({
 });
 
 export const create = mutation({
-  args: { front: v.string(), back: v.string() },
-  handler: async (ctx, { front, back }) => {
+  args: { front: v.string(), back: v.string(), topic: v.optional(v.string()) },
+  handler: async (ctx, { front, back, topic }) => {
     await requireUserIdentity(ctx);
     const today = new Date().toISOString().split("T")[0];
     return ctx.db.insert("knowledgeCards", {
       front,
       back,
+      topic,
       easeFactor: 2.5,
       interval: 1,
       repetitions: 0,

@@ -81,17 +81,18 @@ function ReviewCard({ card, onRate }: { card: Card; onRate: (rating: 0 | 1 | 2 |
   );
 }
 
-function CardEditor({ onDone }: { onDone: () => void }) {
+function CardEditor({ onDone, existingTopics }: { onDone: () => void; existingTopics: string[] }) {
   const createCard = useMutation(api.knowledgeCards.create);
   const [front, setFront] = useState("");
   const [back, setBack] = useState("");
+  const [topic, setTopic] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit() {
     if (!front.trim() || !back.trim()) return;
     startTransition(async () => {
-      await createCard({ front: front.trim(), back: back.trim() });
-      setFront(""); setBack("");
+      await createCard({ front: front.trim(), back: back.trim(), topic: topic.trim() || undefined });
+      setFront(""); setBack(""); setTopic("");
       onDone();
     });
   }
@@ -101,6 +102,13 @@ function CardEditor({ onDone }: { onDone: () => void }) {
       <h3 className="text-sm font-medium text-white">New Card</h3>
       <textarea value={front} onChange={(e) => setFront(e.target.value)} rows={2} placeholder="Front — question or concept. Supports $LaTeX$" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[hsl(0_0%_68%)] outline-none resize-none font-mono" />
       <textarea value={back} onChange={(e) => setBack(e.target.value)} rows={2} placeholder="Back — answer or definition. Supports $$LaTeX$$" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[hsl(0_0%_68%)] outline-none resize-none font-mono" />
+      {existingTopics.length > 0 && (
+        <select value={topic} onChange={(e) => setTopic(e.target.value)}
+          className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-2 text-sm text-white outline-none">
+          <option value="">Uncategorized</option>
+          {existingTopics.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      )}
       {(front || back) && (
         <div className="bg-[hsl(0_0%_5%)] rounded-lg p-3 text-xs">
           <p className="text-[hsl(0_0%_68%)] mb-1">Preview:</p>
@@ -386,7 +394,7 @@ export function FlashcardDeck() {
         </div>
       )}
 
-      {showAdd && <CardEditor onDone={() => setShowAdd(false)} />}
+      {showAdd && <CardEditor onDone={() => setShowAdd(false)} existingTopics={allTopics} />}
 
       {mode === "review" && (
         <div>
