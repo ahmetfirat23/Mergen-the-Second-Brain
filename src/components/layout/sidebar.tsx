@@ -44,6 +44,7 @@ export function Sidebar({ onCmdK, onQuickCapture }: SidebarProps) {
   const overdueGoals = useQuery(api.goals.getOverdue, skip ? "skip" : {}) ?? [];
 
   const urgentCount = deadlines.filter((d) => {
+    if (d.done) return false;
     try { const dt = parseISO(d.deadline); if (isNaN(dt.getTime())) return false; return differenceInDays(dt, new Date()) <= 7; } catch { return false; }
   }).length;
 
