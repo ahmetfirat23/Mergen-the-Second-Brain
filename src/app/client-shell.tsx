@@ -1,6 +1,7 @@
 "use client";
 
 import { CmdKSearch } from "@/components/layout/cmd-k-search";
+import { QuickCapture } from "@/components/layout/quick-capture";
 import { MovieChat } from "@/components/chat/movie-chat";
 import { Sidebar } from "@/components/layout/sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
@@ -13,6 +14,7 @@ import { ArrowUp } from "lucide-react";
 
 export function ClientShell({ children }: { children: React.ReactNode }) {
   const [cmdKOpen, setCmdKOpen] = useState(false);
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
@@ -24,6 +26,10 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setCmdKOpen((o) => !o);
+      }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "n") {
+        e.preventDefault();
+        setQuickCaptureOpen((o) => !o);
       }
     }
     window.addEventListener("keydown", handleKey);
@@ -64,15 +70,16 @@ export function ClientShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden">
       <AppProgressBar height="2px" color="hsl(263,90%,65%)" options={{ showSpinner: false }} shallowRouting />
-      <Sidebar onCmdK={() => setCmdKOpen(true)} />
+      <Sidebar onCmdK={() => setCmdKOpen(true)} onQuickCapture={() => setQuickCaptureOpen(true)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <MobileHeader onCmdK={() => setCmdKOpen(true)} />
+        <MobileHeader onCmdK={() => setCmdKOpen(true)} onQuickCapture={() => setQuickCaptureOpen(true)} />
         <main ref={mainRef} className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
           {children}
         </main>
       </div>
       <BottomNav />
       <CmdKSearch open={cmdKOpen} onClose={() => setCmdKOpen(false)} />
+      <QuickCapture open={quickCaptureOpen} onClose={() => setQuickCaptureOpen(false)} />
       {isWatchList && <MovieChat />}
       <button
         onClick={() => mainRef.current?.scrollTo({ top: 0, behavior: "smooth" })}

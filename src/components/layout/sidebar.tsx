@@ -13,6 +13,7 @@ import {
   Layers,
   ListTodo,
   PlaySquare,
+  Plus,
   Target,
 } from "lucide-react";
 import Link from "next/link";
@@ -31,9 +32,10 @@ const NAV_ITEMS = [
 
 interface SidebarProps {
   onCmdK: () => void;
+  onQuickCapture: () => void;
 }
 
-export function Sidebar({ onCmdK }: SidebarProps) {
+export function Sidebar({ onCmdK, onQuickCapture }: SidebarProps) {
   const pathname = usePathname();
   const { isAuthenticated } = useConvexAuth();
   const skip = !isAuthenticated;
@@ -96,6 +98,16 @@ export function Sidebar({ onCmdK }: SidebarProps) {
       </nav>
 
       <div className="p-2 border-t border-[hsl(0_0%_22%)] space-y-0.5">
+        <button
+          onClick={onQuickCapture}
+          className="w-full flex items-center gap-3 px-2 lg:px-3 py-2 rounded-md text-sm text-[hsl(0_0%_68%)] hover:text-[hsl(0_0%_80%)] hover:bg-[hsl(0_0%_13%)] transition-colors"
+        >
+          <Plus className="w-4 h-4 shrink-0" />
+          <span className="hidden lg:flex items-center gap-2 flex-1 justify-between">
+            <span>Quick capture</span>
+            <kbd className="text-[10px] bg-[hsl(0_0%_12%)] border border-[hsl(0_0%_28%)] rounded px-1 py-0.5">⌘⇧N</kbd>
+          </span>
+        </button>
         <button
           onClick={onCmdK}
           className="w-full flex items-center gap-3 px-2 lg:px-3 py-2 rounded-md text-sm text-[hsl(0_0%_68%)] hover:text-[hsl(0_0%_80%)] hover:bg-[hsl(0_0%_13%)] transition-colors"
