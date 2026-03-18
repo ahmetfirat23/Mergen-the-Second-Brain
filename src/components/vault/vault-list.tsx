@@ -3,7 +3,7 @@
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { useQuery, useMutation } from "convex/react";
-import { ExternalLink, GripVertical, Pencil, Plus, Trash2, X, Check, ClipboardList } from "lucide-react";
+import { ExternalLink, GripVertical, Pencil, Plus, Search, Trash2, X, Check, ClipboardList } from "lucide-react";
 import { useState, useTransition } from "react";
 import {
   DndContext, DragEndEvent, KeyboardSensor, PointerSensor, TouchSensor,
@@ -28,9 +28,13 @@ function UrgencyDot({ urgency }: { urgency: number }) {
   );
 }
 
-type VaultItem = { _id: Id<"vault">; title: string; url: string; urgency: number; sortOrder?: number };
+function parseTags(raw: string): string[] {
+  return raw.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+}
 
-function SortableVaultRow({ item }: { item: VaultItem }) {
+type VaultItem = { _id: Id<"vault">; title: string; url: string; urgency: number; sortOrder?: number; tags?: string[] };
+
+function SortableVaultRow({ item, onTagClick }: { item: VaultItem; onTagClick: (tag: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item._id });
 
@@ -42,29 +46,31 @@ function SortableVaultRow({ item }: { item: VaultItem }) {
 
   return (
     <div ref={setNodeRef} style={style} className={isDragging ? "z-50 shadow-lg" : ""}>
-      <VaultRow item={item} dragHandleProps={{ ...attributes, ...listeners }} />
+      <VaultRow item={item} dragHandleProps={{ ...attributes, ...listeners }} onTagClick={onTagClick} />
     </div>
   );
 }
 
-function VaultRow({ item, dragHandleProps }: { item: VaultItem; dragHandleProps?: React.HTMLAttributes<HTMLButtonElement> }) {
+function VaultRow({ item, dragHandleProps, onTagClick }: { item: VaultItem; dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>; onTagClick: (tag: string) => void }) {
   const updateItem = useMutation(api.vault.update);
   const removeItem = useMutation(api.vault.remove);
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(item.title);
   const [url, setUrl] = useState(item.url);
   const [urgency, setUrgency] = useState(item.urgency);
+  const [tagsRaw, setTagsRaw] = useState((item.tags ?? []).join(", "));
   const [isPending, startTransition] = useTransition();
 
   function handleSave() {
     startTransition(async () => {
-      await updateItem({ id: item._id, title, url, urgency });
+      await updateItem({ id: item._id, title, url, urgency, tags: parseTags(tagsRaw) });
       setEditing(false);
     });
   }
 
   function handleCancel() {
-    setTitle(item.title); setUrl(item.url); setUrgency(item.urgency); setEditing(false);
+    setTitle(item.title); setUrl(item.url); setUrgency(item.urgency);
+    setTagsRaw((item.tags ?? []).join(", ")); setEditing(false);
   }
 
   const domain = (() => { try { return new URL(item.url).hostname; } catch { return item.url; } })();
@@ -75,6 +81,7 @@ function VaultRow({ item, dragHandleProps }: { item: VaultItem; dragHandleProps?
         <div className="p-4 space-y-2">
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-1.5 text-sm text-white outline-none" />
           <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-1.5 text-sm text-white outline-none" />
+          <input value={tagsRaw} onChange={(e) => setTagsRaw(e.target.value)} placeholder="Tags (comma-separated)" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-[hsl(0_0%_45%)] outline-none" />
           <div className="flex items-center gap-3">
             <label className="text-xs text-[hsl(0_0%_75%)]">Urgency:</label>
             {[1, 2, 3, 4, 5].map((n) => (
@@ -89,7 +96,6 @@ function VaultRow({ item, dragHandleProps }: { item: VaultItem; dragHandleProps?
         </div>
       ) : (
         <div className="flex items-center gap-2 p-3 pr-4">
-          {/* Drag handle */}
           {dragHandleProps && (
             <button
               {...dragHandleProps}
@@ -100,7 +106,6 @@ function VaultRow({ item, dragHandleProps }: { item: VaultItem; dragHandleProps?
               <GripVertical className="w-3.5 h-3.5" />
             </button>
           )}
-          {/* Main content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <a href={item.url} target="_blank" rel="noopener noreferrer"
@@ -109,13 +114,18 @@ function VaultRow({ item, dragHandleProps }: { item: VaultItem; dragHandleProps?
               </a>
               <ExternalLink className="w-3.5 h-3.5 text-[hsl(0_0%_64%)] shrink-0" />
             </div>
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-[hsl(0_0%_64%)] truncate flex-1 min-w-0">{domain}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs text-[hsl(0_0%_64%)] truncate">{domain}</p>
               <UrgencyDot urgency={item.urgency} />
               <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${URGENCY_COLORS[item.urgency]}`}>U{item.urgency}</span>
+              {(item.tags ?? []).map((tag) => (
+                <button key={tag} onClick={() => onTagClick(tag)}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-[hsl(263_90%_65%/0.12)] text-[hsl(263_70%_70%)] hover:bg-[hsl(263_90%_65%/0.22)] transition-colors leading-none">
+                  {tag}
+                </button>
+              ))}
             </div>
           </div>
-          {/* Action buttons — always visible, no absolute positioning */}
           <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
             <button onClick={() => setEditing(true)} className="p-1.5 rounded-md hover:bg-[hsl(0_0%_20%)] text-[hsl(0_0%_75%)] hover:text-white"><Pencil className="w-3.5 h-3.5" /></button>
             <button onClick={() => { if (confirm(`Delete "${item.title}"?`)) removeItem({ id: item._id }); }} className="p-1.5 rounded-md hover:bg-red-900/40 text-[hsl(0_0%_75%)] hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -137,8 +147,21 @@ export function VaultList() {
   const [newTitle, setNewTitle] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [newUrgency, setNewUrgency] = useState(3);
+  const [newTagsRaw, setNewTagsRaw] = useState("");
   const [bulkText, setBulkText] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  const [search, setSearch] = useState("");
+  const [filterTag, setFilterTag] = useState("");
+
+  const allTags = Array.from(new Set(items.flatMap((i) => i.tags ?? []))).sort();
+
+  const sq = search.trim().toLowerCase();
+  const filtered = items.filter((i) => {
+    if (filterTag && !(i.tags ?? []).includes(filterTag)) return false;
+    if (sq && !i.title.toLowerCase().includes(sq) && !i.url.toLowerCase().includes(sq)) return false;
+    return true;
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -149,8 +172,8 @@ export function VaultList() {
   function handleAdd() {
     if (!newTitle.trim() || !newUrl.trim()) return;
     startTransition(async () => {
-      await createItem({ title: newTitle.trim(), url: newUrl.trim(), urgency: newUrgency });
-      setNewTitle(""); setNewUrl(""); setNewUrgency(3); setShowAdd(false);
+      await createItem({ title: newTitle.trim(), url: newUrl.trim(), urgency: newUrgency, tags: parseTags(newTagsRaw) });
+      setNewTitle(""); setNewUrl(""); setNewUrgency(3); setNewTagsRaw(""); setShowAdd(false);
     });
   }
 
@@ -182,6 +205,47 @@ export function VaultList() {
 
   return (
     <div>
+      {/* Controls bar */}
+      {items.length > 0 && (
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <div className="relative flex-1 min-w-[140px]">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[hsl(0_0%_50%)] pointer-events-none" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title or URL…"
+              className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_22%)] rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder:text-[hsl(0_0%_45%)] outline-none focus:border-[hsl(0_0%_35%)] transition-colors"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(0_0%_50%)] hover:text-white">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          {allTags.length > 0 && (
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_22%)] rounded-lg px-2 py-2 text-sm text-[hsl(0_0%_75%)] outline-none focus:border-[hsl(0_0%_35%)] transition-colors"
+            >
+              <option value="">All tags</option>
+              {allTags.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          )}
+        </div>
+      )}
+
+      {/* Active tag filter pill */}
+      {filterTag && (
+        <div className="flex items-center gap-1.5 mb-3">
+          <span className="text-xs text-[hsl(0_0%_55%)]">Tag:</span>
+          <button onClick={() => setFilterTag("")}
+            className="flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-[hsl(263_90%_65%/0.15)] text-[hsl(263_70%_70%)] hover:bg-[hsl(263_90%_65%/0.25)] transition-colors">
+            {filterTag} <X className="w-2.5 h-2.5" />
+          </button>
+        </div>
+      )}
+
       <div className="flex gap-2 mb-4 flex-wrap">
         {!showAdd && !showBulk && (
           <>
@@ -202,6 +266,7 @@ export function VaultList() {
           <h3 className="text-sm font-medium text-white">Add Link</h3>
           <input autoFocus value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="Title" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[hsl(0_0%_68%)] outline-none" />
           <input value={newUrl} onChange={(e) => setNewUrl(e.target.value)} placeholder="https://…" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[hsl(0_0%_68%)] outline-none" />
+          <input value={newTagsRaw} onChange={(e) => setNewTagsRaw(e.target.value)} placeholder="Tags (comma-separated, optional)" className="w-full bg-[hsl(0_0%_10%)] border border-[hsl(0_0%_28%)] rounded-lg px-3 py-2 text-sm text-white placeholder:text-[hsl(0_0%_45%)] outline-none" />
           <div className="flex items-center gap-3">
             <label className="text-xs text-[hsl(0_0%_75%)]">Urgency:</label>
             {[1, 2, 3, 4, 5].map((n) => (
@@ -233,12 +298,14 @@ export function VaultList() {
 
       {items.length === 0 && !showAdd && !showBulk ? (
         <div className="text-center py-20 text-[hsl(0_0%_68%)]"><p className="text-sm">No links yet. Add one above or paste a brain dump with URLs.</p></div>
+      ) : filtered.length === 0 && (search || filterTag) ? (
+        <p className="text-center py-10 text-sm text-[hsl(0_0%_55%)]">No links match your filter.</p>
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={items.map((i) => i._id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={filtered.map((i) => i._id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
-              {items.map((item) => (
-                <SortableVaultRow key={item._id} item={item} />
+              {filtered.map((item) => (
+                <SortableVaultRow key={item._id} item={item} onTagClick={setFilterTag} />
               ))}
             </div>
           </SortableContext>
